@@ -1,0 +1,754 @@
+{
+  "name": "Qualification recommendation",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "9b24fcf1-8d27-460d-b44c-02dcd60fe980",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-5-NANO"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a real estate lead qualification assistant. Classify the lead as Hot, Warm, or Cold based on urgency signals in their message and their budget clarity. Respond ONLY in JSON: {\"score\": \"\", \"reason\": \"\"}"
+            },
+            {
+              "content": "=Name: {{$json.name}}\\nMessage: {{$json.message}}\\nBudget: {{$json.budget_min}} - {{$json.budget_max}}\\nLocation: {{$json.preferred_location}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c19809a3-7497-4897-be3e-74330747851b",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "QcTHLvC7xw3QCUp1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ed4cfbe2-a5a8-4249-87d9-fe299d39d3de",
+              "leftValue": "={{$json.score}}",
+              "rightValue": "Cold",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        800,
+        0
+      ],
+      "id": "5819ff53-7d7a-4219-bba5-b74c69dd5834",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k",
+          "mode": "list",
+          "cachedResultName": "PROPERTIES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1024,
+        0
+      ],
+      "id": "e3e40ea7-db84-4df5-a6db-857bc7170441",
+      "name": "Get row(s) in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $('Parse AI').first().json; // replace with your actual Parse-AI/lead node name\nconst properties = items.map(item => item.json);\n\nconst leadLat = Number(lead.lat);\nconst leadLng = Number(lead.lng);\n\nfunction distanceKm(lat1, lon1, lat2, lon2) {\n  if (!lat1 || !lat2 || !lon1 || !lon2) return 9999;\n  const R = 6371;\n  const dLat = (lat2 - lat1) * Math.PI / 180;\n  const dLon = (lon2 - lon1) * Math.PI / 180;\n  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2;\n  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));\n}\n\nconst matches = properties\n  .filter(p => Number(p.price) >= Number(lead.budget_min) && Number(p.price) <= Number(lead.budget_max))\n  .filter(p => p.type?.toLowerCase() === lead.property_type?.toLowerCase())\n  .map(p => ({ ...p, distance_km: distanceKm(leadLat, leadLng, Number(p.lat), Number(p.lng)) }))\n  .sort((a, b) => a.distance_km - b.distance_km)\n  .slice(0, 3);\n\nconst topMatch = matches.length > 0 ? matches[0] : null;\n\nconst matches_text = topMatch\n  ? `${topMatch.title} | ${topMatch.location} | Rs ${topMatch.price} | ${topMatch.bedrooms} BHK | ${topMatch.distance_km.toFixed(1)} km away`\n  : \"No matching properties found.\";\n\nconst top_match_property_id = topMatch ? topMatch.property_id : null;\nconst top_match_location = topMatch ? topMatch.location : null;\n\nconsole.log(\"Lead location:\", leadLat, leadLng);\nconsole.log(\"Ranked matches:\", matches.map(m => ({ id: m.property_id, location: m.location, distance_km: m.distance_km })));\n\nreturn {\n  json: {\n    lead,\n    matches,\n    matches_text,\n    top_match_property_id,\n    top_match_location\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1248,
+        0
+      ],
+      "id": "1e09d77f-3d57-4c70-b20e-fb5dc5573d29",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-nano",
+          "mode": "list",
+          "cachedResultName": "GPT-5-NANO"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "You are a friendly real estate assistant. Write a warm, personalized email body (3-4 sentences) recommending these matched properties to the customer. Mention specific details like location, price, and bedrooms for each property. End with a call-to-action inviting them to reply if interested in scheduling a visit. Do not include a subject line, just the email body."
+            },
+            {
+              "content": "=Customer Name: {{$json.lead.name}}\nPreferences: {{$json.lead.property_type}} in {{$json.lead.preferred_location}}, budget Rs {{$json.lead.budget_min}} - Rs {{$json.lead.budget_max}}\n\nMatched Properties:\n{{$json.matches_text}}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        1472,
+        0
+      ],
+      "id": "c48a76fb-9da6-491f-916e-66c4df617417",
+      "name": "Message a model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "QcTHLvC7xw3QCUp1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// adjust the path below to match your actual AI node's output shape\nconst raw = $input.item.json.message?.content || $input.item.json.choices?.[0]?.message?.content;\n\nlet parsed;\ntry {\n  // strip markdown code fences if the model wrapped its JSON in ```json ... ```\n  const cleaned = raw.replace(/```json|```/g, \"\").trim();\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = { score: \"Warm\", reason: \"Could not parse AI response, defaulting to Warm\" };\n}\n\n// merge parsed score back with the original lead data flowing through\nreturn {\n  json: {\n    ...$('When Executed by Another Workflow').first().json, // adjust node name if different\n    score: parsed.score,\n    score_reason: parsed.reason\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        0
+      ],
+      "id": "49313d43-02c0-4c4f-b7bf-cff580cefae9",
+      "name": "Parse AI"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code in JavaScript1').item.json.lead.email }}",
+        "subject": "=Properties matching your preferences,{{ $('Code in JavaScript1').item.json.lead.name }}!",
+        "message": "=<p>{{ $json.output[0].content[0].text }}</p>\n\n<p>\n  Interested in <strong>{{ $('Code in JavaScript1').item.json.matches[0].title }}</strong>?<br>\n  <a href=\"https://docs.google.com/forms/d/e/1FAIpQLSfqYXwfhXNNtsi9qlujzLpJwhN3v0UXt8eyhoChe7AQkH1PoA/viewform?usp=pp_url&entry.2132358199={{ $('Code in JavaScript1').item.json.lead.lead_id }}&entry.386727245={{ $('Code in JavaScript1').item.json.top_match_property_id }}\"\n     style=\"background-color:#2c7be5;color:#ffffff;padding:10px 16px;text-decoration:none;border-radius:4px;display:inline-block;\">\n    Confirm Interest & Pick a Visit Date\n  </a>\n</p>\n\n<p style=\"font-size:12px;color:#888;\">If the button doesn't work, copy this link into your browser:<br>\nhttps://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?usp=pp_url&entry.2132358199={{ $('Code in JavaScript1').item.json.lead.lead_id }}&entry.386727245={{ $('Code in JavaScript1').item.json.top_match_property_id }}</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1824,
+        0
+      ],
+      "id": "f2ff652f-9aaf-4777-89ec-aa5d9ca24d92",
+      "name": "Send a message",
+      "webhookId": "c6ecc40a-13bd-4d95-83fb-b57ddff68e0f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I",
+          "mode": "list",
+          "cachedResultName": "real-estate-customer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "lead_id": "={{ $('Code in JavaScript1').item.json.lead.lead_id }}",
+            "status": "Recommendations sent"
+          },
+          "matchingColumns": [
+            "lead_id"
+          ],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "budget_min",
+              "displayName": "budget_min",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "budget_max",
+              "displayName": "budget_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "preferred_location",
+              "displayName": "preferred_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lat",
+              "displayName": "lat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lng",
+              "displayName": "lng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "validated",
+              "displayName": "validated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        2048,
+        0
+      ],
+      "id": "5052c1b2-e816-44a1-ad13-e22edda04f5d",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real-estate/lead-interested",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        320
+      ],
+      "id": "2a202292-4f78-4dfe-8a30-f91e99b8e749",
+      "name": "Webhook",
+      "webhookId": "e3cf1f2e-35dd-4cb4-a242-a60bb463c7fe"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I",
+          "mode": "list",
+          "cachedResultName": "real-estate-customer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "lead_id",
+              "lookupValue": "={{ $json.body.lead_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        224
+      ],
+      "id": "cef6465c-b9c4-4681-b852-5cad92d6c3dd",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k",
+          "mode": "list",
+          "cachedResultName": "PROPERTIES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "property_id",
+              "lookupValue": "={{ $('Webhook').item.json.body.selected_property_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        416
+      ],
+      "id": "7ad5a0ef-5e56-414e-ae01-a2f8addda2a7",
+      "name": "Get row(s) in sheet2",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        448,
+        320
+      ],
+      "id": "cff3a1d1-149a-429b-8767-0596e51db3fc",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "const merged = $input.item.json;\nconst webhookData = $('Webhook').first().json.body; // adjust node name\n\nreturn {\n  json: {\n    lead_id: merged.lead_id,\n    customer_name: merged.name,\n    customer_email: merged.email,\n    customer_phone: merged.phone,\n    selected_property_id: merged.property_id,\n    property_location: merged.location,\n    property_lat: merged.lat,\n    property_lng: merged.lng,\n    visit_datetime: webhookData.preferred_visit_date\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        320
+      ],
+      "id": "a6e0db1a-6e31-4918-a87a-83b71b6cbfc4",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "3fz3waoGd7TiDuqa",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/3fz3waoGd7TiDuqa",
+          "cachedResultName": "My workflow 3"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        320
+      ],
+      "id": "5e2b7255-7d6c-4521-866e-4bdc0581c874",
+      "name": "Call 'My workflow 3'"
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "lead_id": 67,
+          "name": "Keerat",
+          "phone": "9876543734",
+          "email": "prabhsidaksingh33@gmail.com",
+          "source": "website",
+          "budget_min": "70000",
+          "budget_max": "200000",
+          "property_type": "Apartment",
+          "message": "jaldi se jaldi",
+          "preferred_location": "Hari nagar , delhi",
+          "lat": "28.6296489",
+          "lng": "77.1119344",
+          "validated": true
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse AI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Message a model1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get row(s) in sheet2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet2": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Call 'My workflow 3'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "38a572e8-53b1-46fc-b309-c0e4fb90c217",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a08b493c56d9ab630fd3c54ccfddd71f53fc1d7561db89cbc5af8223eb5d9153"
+  },
+  "nodeGroups": [],
+  "id": "68nosyK1yE0H01NQ",
+  "tags": []
+}

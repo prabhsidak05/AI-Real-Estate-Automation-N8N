@@ -1,0 +1,802 @@
+{
+  "name": "Document Booking",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real-estate/booking-intent",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "78fe4ea2-3a66-438a-b4b8-0c7020da8263",
+      "name": "Webhook",
+      "webhookId": "59f31abd-870a-415e-87ce-a7e9f489e27c"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        96
+      ],
+      "id": "81f9c037-5673-460c-aa43-9993d6da7d82",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I",
+          "mode": "list",
+          "cachedResultName": "real-estate-customer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "lead_id",
+              "lookupValue": "={{ $json.body.lead_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        0
+      ],
+      "id": "dada4cab-2d32-4ed2-8605-4ed2e64f664b",
+      "name": "Lead data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k",
+          "mode": "list",
+          "cachedResultName": "PROPERTIES",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1NfTQhT0QxlK7qR_3X56jf0zx6kcAagvoNfj6gPKYM6k/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "property_id",
+              "lookupValue": "={{ $json.body.property_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        192
+      ],
+      "id": "fec53496-1f9a-4d5d-a8e0-1bcef3b6f66f",
+      "name": "Properties data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "={{ $json.name }}_{{ $json.lead_id }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1DKMECwFgwv9ku1iBfr3k5h-DqU58CsI2",
+          "mode": "list",
+          "cachedResultName": "Client Documents",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1DKMECwFgwv9ku1iBfr3k5h-DqU58CsI2"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        448,
+        96
+      ],
+      "id": "242afc07-f95a-471a-9335-1d915192f007",
+      "name": "Create folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "eOTuoS6cASIed1CT",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "folderId": "default",
+        "title": "=Agreement_{{ $json.name }}_{{ $('Merge').item.json.property_id }}"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        672,
+        96
+      ],
+      "id": "966e8df7-5da9-42c6-9d9c-7737acb420ad",
+      "name": "Create a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "7RTTS7wAwILqpzw4",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentURL": "={{ $json.id }}",
+        "actionsUi": {
+          "actionFields": [
+            {
+              "action": "insert",
+              "text": "=This agreement confirms the booking intent of {{ $json.name }} ({{ $('Merge').item.json.email }})  for property {{ $('Merge').item.json.property_id }} located at {{ $('Merge').item.json.location }},  priced at Rs {{ $('Merge').item.json.price }}."
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        896,
+        96
+      ],
+      "id": "9b188ea1-2e6a-46e1-bf26-005ecc8ed80c",
+      "name": "Update a document",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "7RTTS7wAwILqpzw4",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "move",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $('Create a document').item.json.id }}",
+          "mode": "id"
+        },
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Create folder').item.json.id }}",
+          "mode": "id"
+        }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1120,
+        96
+      ],
+      "id": "f8d506a9-2030-4f16-be0d-fdef13a4e20d",
+      "name": "Move file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "eOTuoS6cASIed1CT",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "sendAndWait",
+        "sendTo": "prabhsidaksingh26@gmail.com",
+        "subject": "=Approval needed: Booking for {{ $json.name }}",
+        "message": "IS THE DEAL FINALISED?",
+        "approvalOptions": {
+          "values": {
+            "approvalType": "double"
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        96
+      ],
+      "id": "07a2d313-9379-4882-8bd7-3baa02f24ed0",
+      "name": "Send message and wait for response",
+      "webhookId": "34c5c14e-8fb0-49ec-b57d-80bf23931bc6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fc3dfc6f-ed05-4cac-bf01-b9dc20f47060",
+              "leftValue": "={{ $json.data.approved }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1568,
+        96
+      ],
+      "id": "99df9492-0319-4897-9bcc-b2cce84f07d5",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k",
+          "mode": "list",
+          "cachedResultName": "Bookings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_id": "={{ $('Lead data').item.json.lead_id }}-{{ Date.now() }}",
+            "lead_id": "={{ $('Lead data').item.json.lead_id }}",
+            "property_id": "={{ $('Merge').item.json.property_id }}",
+            "customer_name": "={{ $('Merge').item.json.name }}",
+            "customer_email": "={{ $('Merge').item.json.email }}",
+            "agreement_status": "Signed",
+            "drive_folder_id": "={{ $('Create folder').item.json.id }}",
+            "agreement_doc_url": "={{ $('Update a document').item.json.documentId }}",
+            "status": "Confirmed",
+            "created_at": "={{ $now.toISO() }}",
+            "approved_by": "={{ $('Merge').item.json.name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "booking_id",
+              "displayName": "booking_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_id",
+              "displayName": "property_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "agreement_status",
+              "displayName": "agreement_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "drive_folder_id",
+              "displayName": "drive_folder_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "agreement_doc_url",
+              "displayName": "agreement_doc_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved_by",
+              "displayName": "approved_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        0
+      ],
+      "id": "451dbbfa-39f7-4bd7-8df3-d1187378e303",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "Your booking is confirmed!",
+        "message": "=<p>Hi ,</p> <p>Your booking for <strong>{{ $json.property_id }}</strong> has been confirmed!</p> <p>You can view your agreement document here:  <a href=\"{{ 'https://docs.google.com/document/d/' + $json.agreement_doc_url + '/edit' }}\">View Agreement</a></p> <p>Our team will be in touch with next steps.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        0
+      ],
+      "id": "3eebdf0e-e4b0-4155-904f-c5597f551a19",
+      "name": "Send a message",
+      "webhookId": "237bfa25-8e4e-415b-8b10-a32bc943cb2b"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k",
+          "mode": "list",
+          "cachedResultName": "Bookings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "booking_id": "={{ $('Merge').item.json.lead_id }}-{{ Date.now() }}",
+            "lead_id": "={{ $('Merge').item.json.lead_id }}",
+            "property_id": "={{ $('Merge').item.json.property_id }}",
+            "customer_name": "={{ $('Merge').item.json.name }}",
+            "customer_email": "={{ $('Merge').item.json.email }}",
+            "agreement_status": "Rejected",
+            "drive_folder_id": "={{ $('Create folder').item.json.id }}",
+            "agreement_doc_url": "=",
+            "status": "Rejected",
+            "created_at": "={{ $now.toISO() }}",
+            "approved_by": "Agent"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "booking_id",
+              "displayName": "booking_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_id",
+              "displayName": "property_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "agreement_status",
+              "displayName": "agreement_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "drive_folder_id",
+              "displayName": "drive_folder_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "agreement_doc_url",
+              "displayName": "agreement_doc_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "approved_by",
+              "displayName": "approved_by",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        192
+      ],
+      "id": "c6167c1f-c8ec-449b-bd3c-43dd44708cb7",
+      "name": "Append row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Merge').item.json.email }}",
+        "subject": "Your booking request has been cancelled",
+        "message": "=<p>Hi {{ $json.customer_name }},</p> <p>This is to confirm that your booking request for <strong>{{ $json.property_id }}</strong> has been cancelled.</p> <p>If you'd like to explore other properties or have any questions, feel free to reach out to us anytime — we're happy to help you find the right fit.</p> <p>Thank you for considering us for your property search.</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2016,
+        192
+      ],
+      "id": "df8849de-4e6f-4ae6-b404-def42f669ce7",
+      "name": "Send a message1",
+      "webhookId": "48ee0edc-cb70-42ae-ae2b-d563d9cffb7b"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Lead data",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Properties data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lead data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Properties data": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Create folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create folder": {
+      "main": [
+        [
+          {
+            "node": "Create a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a document": {
+      "main": [
+        [
+          {
+            "node": "Update a document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a document": {
+      "main": [
+        [
+          {
+            "node": "Move file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Move file": {
+      "main": [
+        [
+          {
+            "node": "Send message and wait for response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message and wait for response": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Append row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "615351a9-f880-43fb-b383-6085e61dd450",
+  "meta": {
+    "instanceId": "a08b493c56d9ab630fd3c54ccfddd71f53fc1d7561db89cbc5af8223eb5d9153"
+  },
+  "nodeGroups": [],
+  "id": "GhAiU5w6qsHlqjxc",
+  "tags": []
+}

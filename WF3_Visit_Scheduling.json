@@ -1,0 +1,480 @@
+{
+  "name": "Visit Scheduling",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c64d5a67-c1c2-4bc3-9173-c8ffc877b679",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "9b4afac63463249e1cefb1a11f32f0f041737c5fb8158f1a64af4d7ff8b5d81e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Real-Estate-Agent-Calendar"
+        },
+        "timeMin": "={{ $('Date clearance').first().json.visit_datetime_iso }}",
+        "timeMax": "={{ DateTime.fromISO($('Date clearance').first().json.visit_datetime_iso).plus({hours:1}).toISO() }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "b61c9712-f5d5-4028-b3f8-750d052b099e",
+      "name": "Get availability in a calendar",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "cf7BVA8DyRIE3mwE",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "755f0c11-32d1-4347-ae60-4fbd600ab264",
+              "leftValue": "={{ $json.available }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        672,
+        0
+      ],
+      "id": "a46409ed-7a82-49c1-a806-410626333d61",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "9b4afac63463249e1cefb1a11f32f0f041737c5fb8158f1a64af4d7ff8b5d81e@group.calendar.google.com",
+          "mode": "list",
+          "cachedResultName": "Real-Estate-Agent-Calendar"
+        },
+        "start": "={{ $('Date clearance').first().json.visit_datetime_iso }}",
+        "end": "={{ $('Date clearance').first().json.visit_datetime_iso }}",
+        "additionalFields": {
+          "attendees": [
+            "={{ $('When Executed by Another Workflow').item.json.customer_email }}"
+          ],
+          "description": "=Lead ID: {{ $('When Executed by Another Workflow').item.json.lead_id }}\\nCustomer Phone:{{ $('When Executed by Another Workflow').item.json.customer_phone }} ",
+          "summary": "=Site Visit: {{ $('When Executed by Another Workflow').item.json.customer_name }} - Property {{ $('When Executed by Another Workflow').item.json.selected_property_id }}"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "cb662c14-d86e-4ce9-a4f3-e902b0277e59",
+      "name": "Create an event",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "cf7BVA8DyRIE3mwE",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://maps.googleapis.com/maps/api/directions/json",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "destination",
+              "value": "={{ $('When Executed by Another Workflow').first().json.property_location }}"
+            },
+            {
+              "name": "origin",
+              "value": "Connaught Place, Delhi, India"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "22fdfc78-4861-4095-bf6c-d4d131f42a91",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\nconst raw = data.visit_datetime;\nconst [datePart, timePart] = raw.split('T');\nconst [dd, mm, yyyy] = datePart.split('/');\nconst cleanTime = timePart.split(':').slice(0,3).join(':');\nconst visit_datetime_iso = `${yyyy}-${mm}-${dd}T${cleanTime}+05:30`;\n\nreturn { json: { ...data, visit_datetime_iso } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "01a08fe0-756f-41b7-a832-26d8582ad779",
+      "name": "Date clearance"
+    },
+    {
+      "parameters": {
+        "sendTo": "prabhsidaksingh26@gmail.com",
+        "subject": "=New site visit scheduled: {{ $('When Executed by Another Workflow').first().json.customer_name }}",
+        "message": "=Customer {{ $('When Executed by Another Workflow').first().json.customer_name }} ({{ $('When Executed by Another Workflow').first().json.customer_phone }}) is scheduled to visit {{ $('When Executed by Another Workflow').first().json.selected_property_id }} on {{ $('Date clearance').first().json.visit_datetime_iso }}.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1568,
+        0
+      ],
+      "id": "2805fa10-55c1-4e25-81bf-407bfe88633b",
+      "name": "Agent Message",
+      "webhookId": "6cfd0f29-208b-472d-a1bc-5784f956cdfa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Create an event').item.json.attendees[0].email }}",
+        "subject": "Your site visit is confirmed!",
+        "message": "=<p>Hi {{ $('When Executed by Another Workflow').first().json.customer_name }},</p>\n<p>Your site visit for <strong>{{ $('When Executed by Another Workflow').first().json.selected_property_id }}</strong> \nat {{ $('When Executed by Another Workflow').first().json.property_location }} is confirmed for \n<strong>{{ $('Date clearance').first().json.visit_datetime_iso }}</strong>.</p>\n<p><a href=\"https://www.google.com/maps/dir/?api=1&destination={{ encodeURIComponent($('When Executed by Another Workflow').first().json.property_location) }}\">Get Directions</a></p>\n<p>Looking forward to seeing you there!</p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "84ab56e5-9ebf-4b14-b831-06a61e36d984",
+      "name": "Customer message",
+      "webhookId": "fde74542-57bf-47fc-b536-22c6ad46e5a2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec",
+          "mode": "list",
+          "cachedResultName": "visit",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "visit_id": "={{ $('When Executed by Another Workflow').first().json.lead_id }}-{{ Date.now() }}",
+            "lead_id": "={{ $('When Executed by Another Workflow').first().json.lead_id }}",
+            "property_id": "={{ $('When Executed by Another Workflow').item.json.selected_property_id }}",
+            "customer_name": "={{ $('When Executed by Another Workflow').item.json.customer_name }}",
+            "customer_email": "={{ $('When Executed by Another Workflow').item.json.customer_email }}",
+            "customer_phone": "={{ $('When Executed by Another Workflow').item.json.customer_phone }}",
+            "agent_email": "prabhsidaksingh26@gmail.com",
+            "visit_datetime": "={{ $('Date clearance').first().json.visit_datetime_iso }}",
+            "calendar_event_id": "={{ $('Create an event').first().json.id }}",
+            "status": "Scheduled",
+            "created_at": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "visit_id",
+              "displayName": "visit_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_id",
+              "displayName": "property_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "agent_email",
+              "displayName": "agent_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "visit_datetime",
+              "displayName": "visit_datetime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "calendar_event_id",
+              "displayName": "calendar_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1792,
+        0
+      ],
+      "id": "30d73c56-75b0-4bfc-92be-d81301ceda94",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "json": {
+          "lead_id": 2356,
+          "customer_name": "prabh",
+          "customer_email": "prabhsidaksingh26@gmail.com",
+          "customer_phone": 9711231546,
+          "selected_property_id": "P003",
+          "property_location": "Dwarka Sector 12 Delhi",
+          "property_lat": 28.5921,
+          "property_lng": 77.046,
+          "visit_datetime": "12/08/2026T08:30:00:00"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Date clearance",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get availability in a calendar": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Create an event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create an event": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Customer message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date clearance": {
+      "main": [
+        [
+          {
+            "node": "Get availability in a calendar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Customer message": {
+      "main": [
+        [
+          {
+            "node": "Agent Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agent Message": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1501852b-d7ff-4d01-a3e6-15d1e27b899a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a08b493c56d9ab630fd3c54ccfddd71f53fc1d7561db89cbc5af8223eb5d9153"
+  },
+  "nodeGroups": [],
+  "id": "ybexQgQDP5CbjX1R",
+  "tags": []
+}

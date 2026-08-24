@@ -1,0 +1,1088 @@
+{
+  "name": "Feedback Dashboard",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 22
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        608
+      ],
+      "id": "e44cf370-d8cc-4124-b932-edb4a55de82b",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec",
+          "mode": "list",
+          "cachedResultName": "visit",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "status",
+              "lookupValue": "Scheduled"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        608
+      ],
+      "id": "23f99274-8682-4089-8ff0-15ac11ec9e19",
+      "name": "Get row(s) in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function extractDateStr(raw) {\n  if (!raw) return null;\n  const str = String(raw).trim();\n  // Match YYYY-MM-DD regardless of what comes after (T, space, or nothing)\n  const match = str.match(/^(\\d{4}-\\d{2}-\\d{2})/);\n  return match ? match[1] : null;\n}\n\nconst yesterday = DateTime.now().setZone('Asia/Kolkata').minus({ days: 1 }).toFormat('yyyy-MM-dd');\n\nconst matchingVisits = items.filter(item => {\n  const visitDate = extractDateStr(item.json.visit_datetime);\n  return visitDate === yesterday;\n});\n\nreturn matchingVisits;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        608
+      ],
+      "id": "105274ae-dc76-4bd3-8993-04154aba67c0",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.customer_email }}",
+        "subject": "How was your visit?",
+        "message": "=<p>Hi {{ $json.customer_name }}, thanks for visiting {{ $json.property_id }} yesterday!</p> <p>We'd love your feedback:  <a href=\"https://docs.google.com/forms/d/e/1FAIpQLSfWGGYoLT9wyon8pl61aTwdE5Jjb6BBpV5cACqNUCWfpzX9Zw/viewform?usp=pp_url&entry.2043021881={{ $json.lead_id }}&entry.423361594={{ $json.visit_id }}&entry.279977876={{ $json.property_id }}&entry.526112479&entry.106496699\">Share Feedback</a></p>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        608
+      ],
+      "id": "ba5c9d60-bf7d-4f33-b559-96676f137cd1",
+      "name": "Send a message",
+      "webhookId": "d84e2693-5bcf-4985-a117-fc467aad944f",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec",
+          "mode": "list",
+          "cachedResultName": "visit",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1pVwEPGHjp9fPxEJQk8HyKIYLc8LUhRIPF_2aZ-aJbec/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "Completed",
+            "visit_id": "={{ $('Code in JavaScript').item.json.visit_id }}",
+            "lead_id": "={{ $('Code in JavaScript').item.json.lead_id }}",
+            "property_id": "={{ $('Code in JavaScript').item.json.property_id }}",
+            "customer_name": "={{ $('Code in JavaScript').item.json.customer_name }}",
+            "customer_email": "={{ $('Code in JavaScript').item.json.customer_email }}",
+            "customer_phone": "={{ $('Code in JavaScript').item.json.customer_phone }}",
+            "agent_email": "prabhsidaksingh26@gmail.com"
+          },
+          "matchingColumns": [
+            "visit_id"
+          ],
+          "schema": [
+            {
+              "id": "visit_id",
+              "displayName": "visit_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_id",
+              "displayName": "property_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_email",
+              "displayName": "customer_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "agent_email",
+              "displayName": "agent_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "visit_datetime",
+              "displayName": "visit_datetime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "calendar_event_id",
+              "displayName": "calendar_event_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        672,
+        608
+      ],
+      "id": "d56e47e7-9e60-4d1b-9504-ce79bdc1e7b8",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real-estate/feedback-submit",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -224,
+        912
+      ],
+      "id": "0203c8cb-7c26-47e7-9afa-150919c6cf56",
+      "name": "Receive & Process feedback",
+      "webhookId": "3d21f960-89a4-4654-a59e-d92ee8087529"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I",
+          "mode": "list",
+          "cachedResultName": "real-estate-customer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "lead_id",
+              "lookupValue": "={{ $json.body.lead_id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        912
+      ],
+      "id": "715a9d0c-dd84-4704-b0c1-55395b5d5482",
+      "name": "Get row(s) in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-5-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-5-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "role": "system",
+              "content": "Classify the sentiment of this customer feedback as Positive, Neutral, or Negative. Also extract one key improvement suggestion if present. Respond ONLY in JSON: {\"sentiment\": \"\", \"reason\": \"\"}"
+            },
+            {
+              "content": "=Rating:{{ $('Receive & Process feedback').item.json.body.rating }} /5\\nComments: {{ $('Receive & Process feedback').item.json.body.comments }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        912
+      ],
+      "id": "6d165945-b483-46f0-96ac-1ae0e78b7cc9",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "QcTHLvC7xw3QCUp1",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhookData = $('Receive & Process feedback').first().json.body;\nconst lead = $('Receive & Process feedback').first().json;\n\nconst raw = $input.item.json.output?.[0]?.content?.[0]?.text\n  || $input.item.json.message?.content \n  || $input.item.json.choices?.[0]?.message?.content \n  || $input.item.json.text;\n\nlet parsed;\ntry {\n  const cleaned = String(raw).replace(/```json|```/g, \"\").trim();\n  parsed = JSON.parse(cleaned);\n} catch (e) {\n  parsed = { sentiment: \"Neutral\", reason: \"Could not parse AI response\" };\n}\n\nreturn {\n  json: {\n    lead_id: webhookData.lead_id,\n    visit_id: webhookData.visit_id,\n    property_id: webhookData.property_id,\n    customer_name: lead.name,\n    rating: webhookData.rating,\n    comments: webhookData.comments,\n    sentiment: parsed.sentiment,\n    sentiment_reason: parsed.reason\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        576,
+        912
+      ],
+      "id": "47790129-7948-4ed3-a4d2-fa4d5c4cdaad",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1ysOCvLv8cY6Kaq4cuyX7a74mDo4pn92WkZTn3XmIWmk",
+          "mode": "list",
+          "cachedResultName": "Feedback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ysOCvLv8cY6Kaq4cuyX7a74mDo4pn92WkZTn3XmIWmk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ysOCvLv8cY6Kaq4cuyX7a74mDo4pn92WkZTn3XmIWmk/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "feedback_id": "={{ $json.lead_id }}-{{ Date.now() }}",
+            "lead_id": "={{ $json.lead_id }}",
+            "visit_id": "={{ $json.visit_id }}",
+            "property_id": "={{ $json.property_id }}",
+            "rating": "={{ $json.rating }}",
+            "comments": "={{ $json.comments }}",
+            "sentiment": "={{ $json.sentiment }}",
+            "created_at": "=",
+            "sentiment_reason": "={{ $json.sentiment_reason }}",
+            "customer_name": "={{ $('Get row(s) in sheet1').item.json.name }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "feedback_id",
+              "displayName": "feedback_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "visit_id",
+              "displayName": "visit_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "property_id",
+              "displayName": "property_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "rating",
+              "displayName": "rating",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "comments",
+              "displayName": "comments",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment",
+              "displayName": "sentiment",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "sentiment_reason",
+              "displayName": "sentiment_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        800,
+        912
+      ],
+      "id": "e95ab6b6-9dc9-421e-bb97-a098c2b9730a",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "ccb59d98-1e26-4294-a6cd-0382aea43bf6",
+              "leftValue": "={{ $json.sentiment }}",
+              "rightValue": "Negative",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1024,
+        912
+      ],
+      "id": "9e438364-259b-40cb-8d63-a81ddc835d8e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "prabhsidaksingh26@gmail.com",
+        "subject": "=Negative feedback alert: {{ $json.customer_name }}",
+        "message": "={{ $json.customer_name }} left negative feedback for {{ $json.property_id }}: \"{{ $json.comments }}\". Suggested follow-up: {{ $json.sentiment_reason }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1248,
+        832
+      ],
+      "id": "29ad95a3-cac6-40a8-b357-70d592291e06",
+      "name": "Send a message1",
+      "webhookId": "af1f0005-b0aa-487f-b190-61a497277109",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Note: for a real aggregation, you'd typically run this on a separate Cron,\n// reading all Feedback/Leads/Bookings rows fresh, rather than per-submission.\n// Shown here as a lightweight per-submission update for demo purposes.\n\nconst feedback = items.map(i => i.json);\nconst avgRating = feedback.reduce((sum, f) => sum + Number(f.rating || 0), 0) / (feedback.length || 1);\n\nreturn { json: { avg_rating: avgRating.toFixed(2), updated_at: new Date().toISOString() } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1472,
+        912
+      ],
+      "id": "5d9c14eb-d13d-4559-b6cd-d60e494224b2",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1HKd8dGlsP2S1ty79GyqT7sZlf4odMFGrYaX_JuqOn9Y",
+          "mode": "list",
+          "cachedResultName": "Dashboard",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HKd8dGlsP2S1ty79GyqT7sZlf4odMFGrYaX_JuqOn9Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HKd8dGlsP2S1ty79GyqT7sZlf4odMFGrYaX_JuqOn9Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "metric_value": "={{ $json.avg_rating }}",
+            "metric_name": "avg_rating",
+            "last_updated": "={{ $now.toISO() }}"
+          },
+          "matchingColumns": [
+            "metric_name"
+          ],
+          "schema": [
+            {
+              "id": "metric_name",
+              "displayName": "metric_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "metric_value",
+              "displayName": "metric_value",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "last_updated",
+              "displayName": "last_updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1696,
+        912
+      ],
+      "id": "da5e90aa-5577-4b9c-8888-f3e5e3238d88",
+      "name": "Update row in sheet1",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [
+                2
+              ],
+              "triggerAtHour": 13,
+              "triggerAtMinute": 22
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        192
+      ],
+      "id": "d5f7ca8b-5ccd-4bac-8b14-df6c3b17f839",
+      "name": "Schedule Trigger1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "numberInputs": 3,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        224,
+        176
+      ],
+      "id": "032b10c5-4b83-4ae5-a76a-d9f889105517",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Combine data from all three Get Rows nodes via their node names\nconst feedback = $('Get Feedback').all().map(i => i.json);\nconst bookings = $('Get Bookings').all().map(i => i.json);\nconst leads = $('Get Leads').all().map(i => i.json);\n\nconst totalLeads = leads.length;\nconst totalBookings = bookings.filter(b => b.status === 'Confirmed').length;\nconst conversionRate = totalLeads ? ((totalBookings / totalLeads) * 100).toFixed(1) : 0;\nconst avgRating = feedback.length ? (feedback.reduce((s,f) => s + Number(f.rating||0), 0) / feedback.length).toFixed(2) : 0;\n\nreturn { json: { totalLeads, totalBookings, conversionRate, avgRating } };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        192
+      ],
+      "id": "32233776-b827-4cbd-940f-f7561995f8fc",
+      "name": "Code in JavaScript3"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1ysOCvLv8cY6Kaq4cuyX7a74mDo4pn92WkZTn3XmIWmk",
+          "mode": "list",
+          "cachedResultName": "Feedback",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ysOCvLv8cY6Kaq4cuyX7a74mDo4pn92WkZTn3XmIWmk/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1ysOCvLv8cY6Kaq4cuyX7a74mDo4pn92WkZTn3XmIWmk/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0c03d5a4-d608-4c2b-ac93-201dff7cf365",
+      "name": "Get Feedback",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k",
+          "mode": "list",
+          "cachedResultName": "Bookings",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1JQ8nmAFfp_HKZzhvmP5ALXLYy2imgQHOR9i5715mV9k/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        192
+      ],
+      "id": "d43842de-e366-4d2c-8993-40addd9026c4",
+      "name": "Get Bookings",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I",
+          "mode": "list",
+          "cachedResultName": "real-estate-customer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        0,
+        384
+      ],
+      "id": "f20af527-a814-4cfa-9ffe-2a6c2a236067",
+      "name": "Get Leads",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "prabhsidaksingh26@gmail.com",
+        "subject": "Weekly Sales Summary",
+        "message": "=This week: {{ $json.totalLeads }} leads, {{ $json.totalBookings }} bookings confirmed, {{ $json.conversionRate }}% conversion rate, {{ $json.avgRating }} average rating.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        192
+      ],
+      "id": "ddcf5197-0fdc-4320-be97-e13b4519db0c",
+      "name": "Send a message2",
+      "webhookId": "3029bc77-a31c-44f7-846e-e0886c650cb9",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive & Process feedback": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Get Leads",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Bookings",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Feedback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Feedback": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Bookings": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Get Leads": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript3": {
+      "main": [
+        [
+          {
+            "node": "Send a message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "4c5bb28a-6136-4049-982a-abb156ccf8c5",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a08b493c56d9ab630fd3c54ccfddd71f53fc1d7561db89cbc5af8223eb5d9153"
+  },
+  "nodeGroups": [],
+  "id": "R3GiuzLpDQM2CYWk",
+  "tags": []
+}
