@@ -1,0 +1,688 @@
+{
+  "name": "Lead Collection",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "real-estate/lead-capture",
+        "options": {}
+      },
+      "id": "23f2ece2-f071-468f-bc18-e373bb01bd81",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1568,
+        96
+      ],
+      "webhookId": "ebfc49ae-b12e-4f65-a215-fd0ddee5dec0"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1a2f6fef-956d-4997-a656-afca7c0aa9dc",
+              "name": "lead_id",
+              "value": "={{ $json.body.lead_id }}",
+              "type": "number"
+            },
+            {
+              "id": "fc5904bb-e809-41f0-9f0f-607e84f517ed",
+              "name": "name",
+              "value": "={{ $json.body.name }}",
+              "type": "string"
+            },
+            {
+              "id": "ac66393d-4d76-4fed-b5cd-32e1b4f9e178",
+              "name": "phone",
+              "value": "={{ $json.body.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "b53b84d0-8c25-4ec6-b8d2-a0cfc7b26437",
+              "name": "email",
+              "value": "={{ $json.body.email }}",
+              "type": "string"
+            },
+            {
+              "id": "bcad9e21-8e19-4253-92e1-208a3092d2f7",
+              "name": "source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "18ab30e3-df51-40be-8cb0-edb2f0f86000",
+              "name": "budget_min",
+              "value": "={{ $json.body.budget_min }}",
+              "type": "string"
+            },
+            {
+              "id": "1d26a237-1cd8-4222-b4cd-5610f898373e",
+              "name": "budget_max",
+              "value": "={{ $json.body.budget_max }}",
+              "type": "string"
+            },
+            {
+              "id": "faeb1177-4770-47e2-adab-78bfc57c3494",
+              "name": "property_type",
+              "value": "={{ $json.body.property_type }}",
+              "type": "string"
+            },
+            {
+              "id": "a82c7237-11aa-4861-b5ab-fa6c1ccfd26e",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "88aa04e6-33f5-4347-9a36-f239e8c449c3",
+              "name": "preferred_location",
+              "value": "={{ $json.body.preferred_location }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e0f1db76-137e-4a4d-a09a-c6d5076190a6",
+      "name": "Edit Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -1344,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Webhook').item.json.body.source }}",
+                    "rightValue": "website",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "589c634b-ce29-4aed-9993-95eee5ad0579"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "36a09163-c93a-44e4-8f4c-da08c9556c9f",
+                    "leftValue": "={{$json.source}}",
+                    "rightValue": "whatsapp",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "2a1b3e82-4733-4663-b202-22ae561a297c",
+                    "leftValue": "={{$json.source}}",
+                    "rightValue": "facebook",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "be66b701-4983-4ba3-852c-9adf055d3a84",
+      "name": "Switch",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "=https://nominatim.openstreetmap.org/search",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "q",
+              "value": "={{ $json.preferred_location }}"
+            },
+            {
+              "name": "format",
+              "value": "json"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-real-estate-project"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "bde7ae1d-cb99-46f0-8c54-bd24c84a4b1c",
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -896,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "10000000-0000-0000-0000-000000000001",
+              "name": "lead_id",
+              "value": "={{ $('Edit Fields').first().json.lead_id }}",
+              "type": "number"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000002",
+              "name": "name",
+              "value": "={{ $('Edit Fields').first().json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000003",
+              "name": "phone",
+              "value": "={{ $('Edit Fields').first().json.phone }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000004",
+              "name": "email",
+              "value": "={{ $('Edit Fields').first().json.email }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000005",
+              "name": "source",
+              "value": "={{ $('Edit Fields').first().json.source }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000006",
+              "name": "budget_min",
+              "value": "={{ $('Edit Fields').first().json.budget_min }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000007",
+              "name": "budget_max",
+              "value": "={{ $('Edit Fields').first().json.budget_max }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000008",
+              "name": "property_type",
+              "value": "={{ $('Edit Fields').first().json.property_type }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-000000000009",
+              "name": "message",
+              "value": "={{ $('Edit Fields').first().json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "10000000-0000-0000-0000-00000000000a",
+              "name": "preferred_location",
+              "value": "={{ $('Edit Fields').first().json.preferred_location }}",
+              "type": "string"
+            },
+            {
+              "id": "084b5637-c865-4dc4-9c77-94b53f2c247d",
+              "name": "lat",
+              "value": "={{ $('HTTP Request').first().json.lat }}",
+              "type": "string"
+            },
+            {
+              "id": "8d953233-ceea-4116-8229-cf52eedf3070",
+              "name": "lng",
+              "value": "={{ $('HTTP Request').first().json.lon }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "e3d7c5c7-0c13-473e-b13a-332d22931f18",
+      "name": "Edit Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        -672,
+        96
+      ],
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item.json;\nconst errors = [];\n\nif (!item.email) errors.push(\"Missing email\");\nif (!item.phone) errors.push(\"Missing phone\");\nif (!item.budget_min || !item.budget_max) errors.push(\"Missing budget range\");\n\nif (errors.length > 0) {\n  throw new Error(\"Validation failed: \" + errors.join(\", \"));\n}\n\nreturn { json: { ...item, validated: true } };"
+      },
+      "id": "1c144a92-bf26-4c9d-848d-17bb30c6a012",
+      "name": "Code in JavaScript",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -448,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I",
+          "mode": "list",
+          "cachedResultName": "real-estate-customer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1f8kjSZhIIu8DQrt55nx4cnBvj1Zbkpg_rNKoTeeKf9I/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "lead_id": "={{ $json.lead_id }}",
+            "name": "={{ $json.name }}",
+            "phone": "={{ $json.phone }}",
+            "email": "={{ $json.email }}",
+            "source": "={{ $json.source }}",
+            "budget_min": "={{ $json.budget_min }}",
+            "budget_max": "={{ $json.budget_max }}",
+            "property_type": "={{ $json.property_type }}",
+            "message": "={{ $json.message }}",
+            "preferred_location": "={{ $json.preferred_location }}"
+          },
+          "matchingColumns": [
+            "lead_id"
+          ],
+          "schema": [
+            {
+              "id": "lead_id",
+              "displayName": "lead_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "budget_min",
+              "displayName": "budget_min",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "budget_max",
+              "displayName": "budget_max",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "property_type",
+              "displayName": "property_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "preferred_location",
+              "displayName": "preferred_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lat",
+              "displayName": "lat",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "lng",
+              "displayName": "lng",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "validated",
+              "displayName": "validated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "27bcb3df-cb8c-41ad-bb88-4c101ef5356b",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "KLYCAraVAzG3LtYn",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.email }}",
+        "subject": "=Thanks for reaching out, {{$json.name}}!",
+        "message": "=Hi {{ $json.name }}, thanks for your interest in properties near {{ $json.preferred_location }}. Our team is reviewing your requirements and will get back with matching options shortly.",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2a204514-5900-4b17-904f-b2de29a5d219",
+      "name": "Send a message",
+      "webhookId": "2e822aa6-50d4-4910-8745-a23192596cdb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "PUQKEA55o3wIPwKX",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "ec9Q1RHVrxtI3UZg",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/ec9Q1RHVrxtI3UZg",
+          "cachedResultName": "My workflow 2"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [
+            ""
+          ],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        192
+      ],
+      "id": "daea8333-5879-4a30-ab63-ee4e70374d8c",
+      "name": "Call 'My workflow 2'"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Call 'My workflow 2'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9ec36e9e-4a74-4573-90f2-00ffb68ba599",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a08b493c56d9ab630fd3c54ccfddd71f53fc1d7561db89cbc5af8223eb5d9153"
+  },
+  "nodeGroups": [],
+  "id": "HmTOkBoHJVAL8hkn",
+  "tags": []
+}
